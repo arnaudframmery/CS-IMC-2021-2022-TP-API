@@ -53,14 +53,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 if acteur:
                     queryWhere += f"(category = 'acted in' AND primaryName = '{acteur}') "
                 else:
-                    queryWhere += f"FALSE "
+                    queryWhere += f"1=0 " # False
                 
                 queryWhere += f"OR "
 
                 if directeur:
                     queryWhere += f"(category = 'directed' AND primaryName = '{directeur}') "
                 else:
-                    queryWhere += f"FALSE "
+                    queryWhere += f"1=0 " # False
                 
                 queryWhere += f") "
 
