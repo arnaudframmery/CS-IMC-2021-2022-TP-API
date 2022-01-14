@@ -35,7 +35,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         with pyodbc.connect('DRIVER='+driver+';SERVER=tcp:'+server+';PORT=1433;DATABASE='+database+';UID='+username+';PWD='+ password) as conn:
             cursor = conn.cursor()
 
-            queryBase = "SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title "
+            queryBase = "SELECT runtimeMinutes FROM [dbo].[tTitles] title "
             queryJoin = ""
             queryWhere = "WHERE runtimeMinutes IS NOT NULL "
             queryGroupBy = "GROUP BY title.tconst, primaryTitle, runtimeMinutes "
@@ -68,7 +68,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
                 queryHaving += "HAVING count(DISTINCT(category)) > 1 "
             
-            cursor.execute(queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving)
+            cursor.execute("SELECT AVG(runtimeMinutes) FROM ( " + queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving + ") AS tmp")
 
             """ if not genre and not acteur and not directeur:
                 cursor.execute("SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title WHERE runtimeMinutes IS NOT NULL")
