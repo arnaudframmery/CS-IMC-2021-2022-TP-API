@@ -28,7 +28,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         logging.info("Test de connexion avec py2neo...")
         graph = Graph(neo4j_server, auth=(neo4j_user, neo4j_password))
-        titles = graph.run("MATCH (:Name)-[r:acted_in]-(t:Title) WITH t, count(r) AS nCount WITH max(nCount) AS maxCount MATCH (:Name)-[r:acted_in]-(t:Title) WITH t, maxCount, count(r) AS nCount WHERE nCount = maxCount RETURN t")
+        titles = graph.run("MATCH (:Name)-[r:ACTED_IN]-(t:Title) WITH t, count(r) AS nCount WITH max(nCount) AS maxCount MATCH (:Name)-[r:ACTED_IN]-(t:Title) WITH t, maxCount, count(r) AS nCount WHERE nCount = maxCount RETURN t")
         dataString = "Movies with the greatest number of actors in it :\n"
         for title in titles:
             dataString += f"CYPHER: tconst={title['t.tconst']}, primaryTitle={title['t.primaryTitle']}\n"
