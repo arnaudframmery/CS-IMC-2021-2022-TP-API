@@ -37,6 +37,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
             if not genre and not acteur and not directeur:
                 cursor.execute("SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title WHERE runtimeMinutes IS NOT NULL")
+            
+            if genre and not acteur and not directeur:
+                cursor.execute(f"SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst WHERE runtimeMinutes IS NOT NULL AND genre.genre = '{genre}'")
 
             rows = cursor.fetchall()
             for row in rows:
