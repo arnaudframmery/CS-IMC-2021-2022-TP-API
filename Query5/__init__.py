@@ -35,7 +35,42 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         with pyodbc.connect('DRIVER='+driver+';SERVER=tcp:'+server+';PORT=1433;DATABASE='+database+';UID='+username+';PWD='+ password) as conn:
             cursor = conn.cursor()
 
-            if not genre and not acteur and not directeur:
+            queryBase = "SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title "
+            queryJoin = ""
+            queryWhere = "WHERE runtimeMinutes IS NOT NULL "
+            queryGroupBy = "GROUP BY title.tconst, primaryTitle, runtimeMinutes "
+            queryHaving = ""
+
+            if genre:
+                queryJoin += "INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst "
+                queryWhere += f"AND genre.genre = '{genre}' "
+            
+            if acteur or directeur:
+                queryJoin += "INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst "
+                queryJoin += "INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst "
+                queryWhere += "AND ( "
+
+                if acteur:
+                    queryWhere += f"(category = 'acted in' AND primaryName = '{acteur}') "
+                else:
+                    queryWhere += f"FALSE "
+                
+                queryWhere += f"OR "
+
+                if directeur:
+                    queryWhere += f"(category = 'directed' AND primaryName = '{directeur}') "
+                else:
+                    queryWhere += f"FALSE "
+                
+                queryWhere += f") "
+
+            if acteur and directeur:
+
+                queryHaving += "HAVING count(DISTINCT(category)) > 1 "
+            
+            cursor.execute(queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving)
+
+            """ if not genre and not acteur and not directeur:
                 cursor.execute("SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title WHERE runtimeMinutes IS NOT NULL")
             
             if genre and not acteur and not directeur:
@@ -117,7 +152,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     OR (category = 'directed' AND primaryName = '{directeur}')) \
                     GROUP BY title.tconst, primaryTitle, runtimeMinutes \
                     HAVING count(DISTINCT(category)) > 1"
-                )
+                ) """
 
             rows = cursor.fetchall()
             for row in rows:
