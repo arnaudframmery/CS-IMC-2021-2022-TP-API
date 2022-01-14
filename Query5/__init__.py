@@ -52,6 +52,32 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     AND principal.category = 'acted in' \
                     AND names.primaryName = '{acteur}') AS tmp"
                 )
+            
+            if not genre and not acteur and directeur:
+                cursor.execute(
+                    f"SELECT AVG(runtimeMinutes) FROM ( \
+                    SELECT DISTINCT title.tconst, runtimeMinutes \
+                    FROM [dbo].[tTitles] title \
+                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
+                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
+                    WHERE runtimeMinutes IS NOT NULL \
+                    AND principal.category = 'directed' \
+                    AND names.primaryName = '{directeur}') AS tmp"
+                )
+            
+            if genre and acteur and not directeur:
+                cursor.execute(
+                    f"SELECT AVG(runtimeMinutes) FROM ( \
+                    SELECT DISTINCT title.tconst, runtimeMinutes \
+                    FROM [dbo].[tTitles] title \
+                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
+                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
+                    INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst \
+                    WHERE runtimeMinutes IS NOT NULL \
+                    AND genre.genre = '{genre}' \
+                    AND principal.category = 'acted in' \
+                    AND names.primaryName = '{acteur}') AS tmp"
+                )
 
             rows = cursor.fetchall()
             for row in rows:
