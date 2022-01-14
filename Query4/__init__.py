@@ -31,6 +31,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         titles = graph.run("MATCH (:Name)-[r:ACTED_IN]-(t:Title) WITH t, count(r) AS nCount WITH max(nCount) AS maxCount MATCH (:Name)-[r:ACTED_IN]-(t:Title) WITH t, maxCount, count(r) AS nCount WHERE nCount = maxCount RETURN t")
         dataString = "Movies with the greatest number of actors in it :\n"
         for title in titles:
+            print(title)
             dataString += f"CYPHER: tconst={title['t.tconst']}, primaryTitle={title['t.primaryTitle']}\n"
     except:
         errorMessage = "Erreur de connexion a la base Neo4j"
