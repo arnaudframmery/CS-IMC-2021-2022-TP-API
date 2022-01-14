@@ -78,6 +78,46 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     AND principal.category = 'acted in' \
                     AND names.primaryName = '{acteur}') AS tmp"
                 )
+            
+            if genre and not acteur and directeur:
+                cursor.execute(
+                    f"SELECT AVG(runtimeMinutes) FROM ( \
+                    SELECT DISTINCT title.tconst, runtimeMinutes \
+                    FROM [dbo].[tTitles] title \
+                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
+                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
+                    INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst \
+                    WHERE runtimeMinutes IS NOT NULL \
+                    AND genre.genre = '{genre}' \
+                    AND principal.category = 'directed' \
+                    AND names.primaryName = '{acteur}') AS tmp"
+                )
+            
+            if not genre and acteur and directeur:
+                cursor.execute(
+                    f"SELECT AVG(runtimeMinutes) \
+                    FROM [dbo].[tTitles] title \
+                    INNER JOIN [dbo].[tPrincipals] principal ON title.tconst = principal.tconst \
+                    INNER JOIN [dbo].[tNames] name ON name.nconst = principal.nconst \
+                    WHERE (category = 'acted in' AND primaryName = '{acteur}') \
+                    OR (category = 'directed' AND primaryName = '{directeur}') \
+                    GROUP BY title.tconst, primaryTitle, runtimeMinutes \
+                    HAVING count(DISTINCT(category)) > 1"
+                )
+            
+            if genre and acteur and directeur:
+                cursor.execute(
+                    f"SELECT AVG(runtimeMinutes) \
+                    FROM [dbo].[tTitles] title \
+                    INNER JOIN [dbo].[tPrincipals] principal ON title.tconst = principal.tconst \
+                    INNER JOIN [dbo].[tNames] name ON name.nconst = principal.nconst \
+                    INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst \
+                    WHERE genre.genre = '{genre}' \
+                    AND ((category = 'acted in' AND primaryName = '{acteur}') \
+                    OR (category = 'directed' AND primaryName = '{directeur}')) \
+                    GROUP BY title.tconst, primaryTitle, runtimeMinutes \
+                    HAVING count(DISTINCT(category)) > 1"
+                )
 
             rows = cursor.fetchall()
             for row in rows:
