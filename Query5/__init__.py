@@ -77,7 +77,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             cursor.execute("SELECT AVG(runtimeMinutes) FROM ( " + queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving + ") AS tmp")
 
             rows = cursor.fetchall()
-            if len(rows) != 0:
+            if rows[0][0]:
                 dataString += f"{rows[0][0]} min\n"
             else:
                 dataString += "Aucune donnée disponible ( ಠ ʖ̯ ಠ) essayez avec d'autres paramètres !\n"

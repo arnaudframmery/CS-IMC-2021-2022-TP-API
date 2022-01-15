@@ -30,7 +30,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         graph = Graph(neo4j_server, auth=(neo4j_user, neo4j_password))
         genres = graph.run("MATCH (n:Name)-[r1]-(t:Title)-[r2]-(g:Genre) WITH n, t, g, r1 WHERE type(r1) = \"ACTED_IN\" OR type(r1) = \"DIRECTED\" WITH n, t, g, count(DISTINCT type(r1)) AS rCount WHERE rCount > 1 RETURN DISTINCT(g.genre)")
         dataString = "Les genres pour lesquels au moins un film a une même personne qui a été la fois directeur et acteur :\n"
-        if len(genres) != 0:
+        if genres.data():
             for i, genre in enumerate(genres):
                 dataString += f"{i+1} -> {genre}\n"
         else:

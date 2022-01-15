@@ -30,7 +30,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         graph = Graph(neo4j_server, auth=(neo4j_user, neo4j_password))
         titles = graph.run("MATCH (:Name)-[r:ACTED_IN]-(t:Title) WITH t, count(r) AS nCount WITH max(nCount) AS maxCount MATCH (:Name)-[r:ACTED_IN]-(t:Title) WITH t, maxCount, count(r) AS nCount WHERE nCount = maxCount RETURN t.tconst, t.primaryTitle")
         dataString = "Les films ayant le plus d'acteurs :\n"
-        if len(titles) != 0:
+        if titles.data():
             for i, title in enumerate(titles):
                 dataString += f"{i+1} -> {title['t.tconst']}, {title['t.primaryTitle']}\n"
         else:
