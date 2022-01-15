@@ -33,7 +33,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             cursor.execute("SELECT genre.genre, AVG(title.averageRating) AS average FROM [dbo].[tTitles] title JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst WHERE title.averageRating IS NOT NULL GROUP BY genre.genre")
             dataString = "La note moyenne des films par genre :\n"
             rows = cursor.fetchall()
-            if rows:
+            if len(rows) != 0:
                 for i, row in enumerate(rows):
                     dataString += f"{i+1} -> {row[0]} : {row[1]}\n"
             else:

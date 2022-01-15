@@ -34,7 +34,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Au moins une des variables d'environnement n'a pas été initialisée.", status_code=500)
         
     errorMessage = ""
-    dataString = f"Durée moyenne des films {f"({paramsString})" if paramsString != "" else ""} : "
+    dataString = f"Durée moyenne des films {f'({paramsString})' if paramsString != '' else ''} : "
 
     try:
         logging.info("Test de connexion avec pyodbc...")
@@ -77,7 +77,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             cursor.execute("SELECT AVG(runtimeMinutes) FROM ( " + queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving + ") AS tmp")
 
             rows = cursor.fetchall()
-            if rows:
+            if len(rows) != 0:
                 dataString += f"{rows[0][0]} min\n"
             else:
                 dataString += "Aucune donnée disponible ( ಠ ʖ̯ ಠ) essayez avec d'autres paramètres !\n"
