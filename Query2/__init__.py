@@ -29,8 +29,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info("Test de connexion avec py2neo...")
         graph = Graph(neo4j_server, auth=(neo4j_user, neo4j_password))
         genres = graph.run("MATCH (n:Name)-[r1]-(t:Title)-[r2]-(g:Genre) WITH n, t, g, r1 WHERE type(r1) = \"ACTED_IN\" OR type(r1) = \"DIRECTED\" WITH n, t, g, count(DISTINCT type(r1)) AS rCount WHERE rCount > 1 RETURN DISTINCT(g.genre)")
-        for genre in genres:
-            dataString += f"CYPHER: genre={genre}\n"
+        dataString = "Les genres pour lesquels au moins un film a une même personne qui a été la fois directeur et acteur :\n"
+        if genres:
+            for i, genre in enumerate(genres):
+                dataString += f"{i+1} -> {genre}\n"
+        else:
+            dataString += "Aucune donnée disponible ( ಠ ʖ̯ ಠ)\n"
     except:
         errorMessage = "Erreur de connexion a la base Neo4j"
     
@@ -38,4 +42,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(dataString + errorMessage, status_code=500)
 
     else:
-        return func.HttpResponse(dataString + " Connexions réussies a Neo4j et SQL!")
+        return func.HttpResponse(dataString)

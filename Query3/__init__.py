@@ -30,11 +30,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info("Test de connexion avec pyodbc...")
         with pyodbc.connect('DRIVER='+driver+';SERVER=tcp:'+server+';PORT=1433;DATABASE='+database+';UID='+username+';PWD='+ password) as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT genre.genre, AVG(title.averageRating) AS average FROM [dbo].[tTitles] title JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst GROUP BY genre.genre")
-
+            cursor.execute("SELECT genre.genre, AVG(title.averageRating) AS average FROM [dbo].[tTitles] title JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst WHERE title.averageRating IS NOT NULL GROUP BY genre.genre")
+            dataString = "La note moyenne des films par genre :\n"
             rows = cursor.fetchall()
-            for row in rows:
-                dataString += f"SQL: genre={row[0]}, averageRating={row[1]}\n"
+            if rows:
+                for i, row in enumerate(rows):
+                    dataString += f"{i+1} -> {row[0]} : {row[1]}\n"
+            else:
+                dataString += "Aucune donnée disponible ( ಠ ʖ̯ ಠ)\n"
     except:
         errorMessage = "Erreur de connexion a la base SQL"
     
@@ -42,4 +45,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(dataString + errorMessage, status_code=500)
 
     else:
-        return func.HttpResponse(dataString + " Connexions réussies a Neo4j et SQL!")
+        return func.HttpResponse(dataString)

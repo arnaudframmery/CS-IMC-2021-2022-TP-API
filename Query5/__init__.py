@@ -13,6 +13,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     genre = req.params.get('genre')
     acteur = req.params.get('acteur')
     directeur = req.params.get('directeur')
+    paramsMap = {
+        "genre": genre,
+        "acteur": acteur,
+        "directeur": directeur
+    }
+    paramsString = ', '.join([f"{key}: {value}" for key, value in paramsMap.items() if value])
     
     server = os.environ["TPBDD_SERVER"]
     database = os.environ["TPBDD_DB"]
@@ -28,7 +34,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Au moins une des variables d'environnement n'a pas été initialisée.", status_code=500)
         
     errorMessage = ""
-    dataString = ""
+    dataString = f"Durée moyenne des films {f"({paramsString})" if paramsString != "" else ""} : "
 
     try:
         logging.info("Test de connexion avec pyodbc...")
@@ -70,93 +76,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             
             cursor.execute("SELECT AVG(runtimeMinutes) FROM ( " + queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving + ") AS tmp")
 
-            """ if not genre and not acteur and not directeur:
-                cursor.execute("SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title WHERE runtimeMinutes IS NOT NULL")
-            
-            if genre and not acteur and not directeur:
-                cursor.execute(f"SELECT AVG(runtimeMinutes) FROM [dbo].[tTitles] title JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst WHERE runtimeMinutes IS NOT NULL AND genre.genre = '{genre}'")
-            
-            if not genre and acteur and not directeur:
-                cursor.execute(
-                    f"SELECT AVG(runtimeMinutes) FROM ( \
-                    SELECT DISTINCT title.tconst, runtimeMinutes \
-                    FROM [dbo].[tTitles] title \
-                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
-                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
-                    WHERE runtimeMinutes IS NOT NULL \
-                    AND principal.category = 'acted in' \
-                    AND names.primaryName = '{acteur}') AS tmp"
-                )
-            
-            if not genre and not acteur and directeur:
-                cursor.execute(
-                    f"SELECT AVG(runtimeMinutes) FROM ( \
-                    SELECT DISTINCT title.tconst, runtimeMinutes \
-                    FROM [dbo].[tTitles] title \
-                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
-                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
-                    WHERE runtimeMinutes IS NOT NULL \
-                    AND principal.category = 'directed' \
-                    AND names.primaryName = '{directeur}') AS tmp"
-                )
-            
-            if genre and acteur and not directeur:
-                cursor.execute(
-                    f"SELECT AVG(runtimeMinutes) FROM ( \
-                    SELECT DISTINCT title.tconst, runtimeMinutes \
-                    FROM [dbo].[tTitles] title \
-                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
-                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
-                    INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst \
-                    WHERE runtimeMinutes IS NOT NULL \
-                    AND genre.genre = '{genre}' \
-                    AND principal.category = 'acted in' \
-                    AND names.primaryName = '{acteur}') AS tmp"
-                )
-            
-            if genre and not acteur and directeur:
-                cursor.execute(
-                    f"SELECT AVG(runtimeMinutes) FROM ( \
-                    SELECT DISTINCT title.tconst, runtimeMinutes \
-                    FROM [dbo].[tTitles] title \
-                    INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst \
-                    INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst \
-                    INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst \
-                    WHERE runtimeMinutes IS NOT NULL \
-                    AND genre.genre = '{genre}' \
-                    AND principal.category = 'directed' \
-                    AND names.primaryName = '{acteur}') AS tmp"
-                )
-            
-            if not genre and acteur and directeur:
-                cursor.execute(
-                    f"SELECT AVG(runtimeMinutes) \
-                    FROM [dbo].[tTitles] title \
-                    INNER JOIN [dbo].[tPrincipals] principal ON title.tconst = principal.tconst \
-                    INNER JOIN [dbo].[tNames] name ON name.nconst = principal.nconst \
-                    WHERE (category = 'acted in' AND primaryName = '{acteur}') \
-                    OR (category = 'directed' AND primaryName = '{directeur}') \
-                    GROUP BY title.tconst, primaryTitle, runtimeMinutes \
-                    HAVING count(DISTINCT(category)) > 1"
-                )
-            
-            if genre and acteur and directeur:
-                cursor.execute(
-                    f"SELECT AVG(runtimeMinutes) \
-                    FROM [dbo].[tTitles] title \
-                    INNER JOIN [dbo].[tPrincipals] principal ON title.tconst = principal.tconst \
-                    INNER JOIN [dbo].[tNames] name ON name.nconst = principal.nconst \
-                    INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst \
-                    WHERE genre.genre = '{genre}' \
-                    AND ((category = 'acted in' AND primaryName = '{acteur}') \
-                    OR (category = 'directed' AND primaryName = '{directeur}')) \
-                    GROUP BY title.tconst, primaryTitle, runtimeMinutes \
-                    HAVING count(DISTINCT(category)) > 1"
-                ) """
-
             rows = cursor.fetchall()
-            for row in rows:
-                dataString += f"SQL: averageRuntimeMinute={row[0]}\n"
+            if rows:
+                dataString += f"{rows[0][0]} min\n"
+            else:
+                dataString += "Aucune donnée disponible ( ಠ ʖ̯ ಠ) essayez avec d'autres paramètres !\n"
 
     except:
         errorMessage = "Erreur de connexion a la base SQL"
@@ -165,4 +89,4 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(dataString + errorMessage, status_code=500)
 
     else:
-        return func.HttpResponse(dataString + " Connexions réussies a Neo4j et SQL!")
+        return func.HttpResponse(dataString)
