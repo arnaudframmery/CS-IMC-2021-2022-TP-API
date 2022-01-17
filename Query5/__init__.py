@@ -10,6 +10,7 @@ import azure.functions as func
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
+    # recover params from the query
     genre = req.params.get('genre')
     acteur = req.params.get('acteur')
     directeur = req.params.get('directeur')
@@ -34,6 +35,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse("Au moins une des variables d'environnement n'a pas été initialisée.", status_code=500)
         
     errorMessage = ""
+    # show the params sent in the beginning of the answer
     dataString = f"Durée moyenne des films {f'({paramsString})' if paramsString != '' else ''} : "
 
     try:
@@ -41,16 +43,19 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         with pyodbc.connect('DRIVER='+driver+';SERVER=tcp:'+server+';PORT=1433;DATABASE='+database+';UID='+username+';PWD='+ password) as conn:
             cursor = conn.cursor()
 
+            # Initiate the base query (without params)
             queryBase = "SELECT runtimeMinutes FROM [dbo].[tTitles] title "
             queryJoin = ""
             queryWhere = "WHERE runtimeMinutes IS NOT NULL "
             queryGroupBy = "GROUP BY title.tconst, primaryTitle, runtimeMinutes "
             queryHaving = ""
 
+            # If there is a genre given
             if genre:
                 queryJoin += "INNER JOIN [dbo].[tGenres] genre ON genre.tconst = title.tconst "
                 queryWhere += f"AND genre.genre = '{genre}' "
             
+            # If there is an acteur or a directeur given
             if acteur or directeur:
                 queryJoin += "INNER JOIN [dbo].[tPrincipals] principal ON principal.tconst = title.tconst "
                 queryJoin += "INNER JOIN [dbo].[tNames] names ON principal.nconst = names.nconst "
@@ -70,10 +75,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 
                 queryWhere += f") "
 
+            # If there is an acteur and a directeur given
             if acteur and directeur:
-
                 queryHaving += "HAVING count(DISTINCT(category)) > 1 "
             
+            # Execute the full query
             cursor.execute("SELECT AVG(runtimeMinutes) FROM ( " + queryBase + queryJoin + queryWhere + queryGroupBy + queryHaving + ") AS tmp")
 
             rows = cursor.fetchall()
